@@ -8,12 +8,12 @@
  *  Require Modules
  */
 var Promise = require('bluebird');
-var fs      = require('fs');
+var fs = require('fs');
 
 /**
  * Split File module.
  */
-var SplitFile = function () {};
+var SplitFile = function () { };
 
 /**
  * Split file into number of parts
@@ -22,7 +22,7 @@ var SplitFile = function () {};
  *
  * @returns {Promise}
  */
-SplitFile.prototype.splitFile = function(file, parts) {
+SplitFile.prototype.splitFile = function (file, parts) {
     var self = this;
 
     // Validate parameters.
@@ -31,10 +31,10 @@ SplitFile.prototype.splitFile = function(file, parts) {
     }
 
     return Promise.promisify(fs.stat)(file).then(function (stat) {
-        if (! stat.isFile) {
+        if (!stat.isFile) {
             return Promise.reject(new Error("Given file is not valid"));
         }
-        if (! stat.size) {
+        if (!stat.size) {
             return Promise.reject(new Error("File is empty"));
         }
 
@@ -42,7 +42,7 @@ SplitFile.prototype.splitFile = function(file, parts) {
         var splitSize = Math.floor(totalSize / parts);
 
         // If size of the parts is 0 then you have more parts than bytes.
-        if(splitSize < 1) {
+        if (splitSize < 1) {
             return Promise.reject(new Error("Too many parts, or file too small!"));
         }
 
@@ -53,7 +53,7 @@ SplitFile.prototype.splitFile = function(file, parts) {
         var partInfo = [];
 
         // Iterate the parts
-        for (var i = 0; i < parts; i ++) {
+        for (var i = 0; i < parts; i++) {
             partInfo[i] = {
                 number: i + 1,
 
@@ -79,14 +79,14 @@ SplitFile.prototype.splitFile = function(file, parts) {
  * @param {string} maxSize max part size in BYTES!
  * @returns {Promise}
  */
-SplitFile.prototype.splitFileBySize = function(file, maxSize) {
+SplitFile.prototype.splitFileBySize = function (file, maxSize) {
     var self = this;
 
     return Promise.promisify(fs.stat)(file).then(function (stat) {
-        if (! stat.isFile) {
+        if (!stat.isFile) {
             return Promise.reject(new Error("Given file is not valid"));
         }
-        if (! stat.size) {
+        if (!stat.size) {
             return Promise.reject(new Error("File is empty"));
         }
 
@@ -97,7 +97,7 @@ SplitFile.prototype.splitFileBySize = function(file, maxSize) {
         var splitSize = maxSize;
 
         // If size of the parts is 0 then you have more parts than bytes.
-        if(splitSize < 1) {
+        if (splitSize < 1) {
             return Promise.reject(new Error("Too many parts, or file too small!"));
         }
 
@@ -108,7 +108,7 @@ SplitFile.prototype.splitFileBySize = function(file, maxSize) {
         var partInfo = [];
 
         // Iterate the parts
-        for (var i = 0; i < parts; i ++) {
+        for (var i = 0; i < parts; i++) {
             partInfo[i] = {
                 number: i + 1,
 
@@ -135,24 +135,26 @@ SplitFile.prototype.splitFileBySize = function(file, maxSize) {
  *
  * @returns {Promise}
  */
-SplitFile.prototype.mergeFiles = function(inputFiles, outputFile) {
+SplitFile.prototype.mergeFiles = function (inputFiles, outputFile, writeOptions) {
     // Validate parameters.
     if (inputFiles.length <= 0) {
         return Promise.reject(new Error("Make sure you input an array with files as first parameter!"));
     }
 
-    var writer = fs.createWriteStream(outputFile, {
+    var options = Object.assign({
         encoding: null
-    });
+    }, writeOptions);
+
+    var writer = fs.createWriteStream(outputFile, options);
 
     return Promise.mapSeries(inputFiles, function (file) {
         return new Promise(function (resolve, reject) {
             var reader = fs.createReadStream(file, { encoding: null });
-            reader.pipe( writer, { end: false });
+            reader.pipe(writer, { end: false });
             reader.on('error', reject);
             reader.on('end', resolve);
         });
-    }).then(function() {
+    }).then(function () {
         writer.close();
         return Promise.resolve(outputFile);
     });
